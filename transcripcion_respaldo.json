@@ -1,0 +1,267 @@
+[
+ {
+  "start": 0.0,
+  "end": 2.31,
+  "text": "Hola Camila, gracias por el espacio."
+ },
+ {
+  "start": 2.61,
+  "end": 4.15,
+  "text": "Soy Mateo, de NubeAndina."
+ },
+ {
+  "start": 4.45,
+  "end": 8.29,
+  "text": "Cuéntame un poco de RitmoFit y qué te gustaría resolver."
+ },
+ {
+  "start": 8.59,
+  "end": 9.36,
+  "text": "Hola Mateo."
+ },
+ {
+  "start": 9.66,
+  "end": 12.35,
+  "text": "RitmoFit es una plataforma de fitness conectado."
+ },
+ {
+  "start": 12.65,
+  "end": 18.42,
+  "text": "Vendemos bicicletas y cintas con pantalla, y también tenemos la app para celular y televisor."
+ },
+ {
+  "start": 18.72,
+  "end": 20.65,
+  "text": "Operamos en Colombia y México."
+ },
+ {
+  "start": 20.95,
+  "end": 27.48,
+  "text": "Hoy tenemos unos ciento ochenta mil miembros activos y llevamos más de doce millones de clases tomadas."
+ },
+ {
+  "start": 27.78,
+  "end": 28.55,
+  "text": "Muy bien."
+ },
+ {
+  "start": 28.85,
+  "end": 31.16,
+  "text": "¿Y dónde está el dolor hoy?"
+ },
+ {
+  "start": 31.46,
+  "end": 32.62,
+  "text": "En las recomendaciones."
+ },
+ {
+  "start": 32.92,
+  "end": 41.76,
+  "text": "Cuando alguien se sube a la bici, le mostramos clases recomendadas, pero esa lista se calcula una vez al día, en la madrugada."
+ },
+ {
+  "start": 42.06,
+  "end": 48.6,
+  "text": "Es un script de Python que corre en una sola instancia EC2 y lee de un Postgres."
+ },
+ {
+  "start": 48.9,
+  "end": 58.13,
+  "text": "Si alguien hizo una clase de fuerza a las siete de la mañana, a las siete de la noche le seguimos recomendando lo mismo."
+ },
+ {
+  "start": 58.43,
+  "end": 64.2,
+  "text": "No tiene en cuenta el contexto: qué dispositivo usa, la hora, ni la última clase."
+ },
+ {
+  "start": 64.5,
+  "end": 64.88,
+  "text": "Entiendo."
+ },
+ {
+  "start": 65.18,
+  "end": 69.42,
+  "text": "Entonces quieren pasar de batch diario a recomendaciones en tiempo real."
+ },
+ {
+  "start": 69.72,
+  "end": 70.1,
+  "text": "Exacto."
+ },
+ {
+  "start": 70.4,
+  "end": 78.86,
+  "text": "Queremos que, en el momento en que el miembro inicia sesión en el equipo, el sistema calcule las recomendaciones con su contexto."
+ },
+ {
+  "start": 79.16,
+  "end": 82.62,
+  "text": "Nuestra meta es responder en menos de doscientos milisegundos."
+ },
+ {
+  "start": 82.92,
+  "end": 84.46,
+  "text": "¿Qué datos tienen hoy?"
+ },
+ {
+  "start": 84.76,
+  "end": 88.99,
+  "text": "El historial de clases está en S3, son unos cuatro terabytes."
+ },
+ {
+  "start": 89.29,
+  "end": 94.68,
+  "text": "Ahí está qué clase tomó cada miembro, con qué instructor, la duración, la disciplina."
+ },
+ {
+  "start": 94.98,
+  "end": 101.52,
+  "text": "Los eventos de la app los mandamos a S3 en archivos por hora, nada en streaming todavía."
+ },
+ {
+  "start": 101.82,
+  "end": 120.66,
+  "text": "Para tiempo real normalmente proponemos tres piezas: un almacén de features de baja latencia, por ejemplo DynamoDB; algo que modele la relación entre miembros, clases e instructores, como un grafo; y un flujo de eventos para registrar qué se recomendó y qué se tomó, y así reentrenar el modelo."
+ },
+ {
+  "start": 120.96,
+  "end": 122.12,
+  "text": "Eso suena bien."
+ },
+ {
+  "start": 122.42,
+  "end": 128.57,
+  "text": "El reentrenamiento diario está bien para nosotros; lo que necesitamos en tiempo real es la inferencia."
+ },
+ {
+  "start": 128.87,
+  "end": 130.79,
+  "text": "¿Cómo está conformado el equipo?"
+ },
+ {
+  "start": 131.09,
+  "end": 135.32,
+  "text": "Tenemos tres científicos de datos y una sola persona de DevOps."
+ },
+ {
+  "start": 135.62,
+  "end": 139.47,
+  "text": "Nadie tiene experiencia con Kubernetes, así que preferimos servicios administrados."
+ },
+ {
+  "start": 139.77,
+  "end": 142.08,
+  "text": "No queremos operar clústeres nosotros mismos."
+ },
+ {
+  "start": 142.38,
+  "end": 144.68,
+  "text": "Anotado: servicios administrados y evitar Kubernetes."
+ },
+ {
+  "start": 144.98,
+  "end": 146.14,
+  "text": "¿Restricciones de región?"
+ },
+ {
+  "start": 146.44,
+  "end": 149.9,
+  "text": "Queremos buena latencia para Bogotá y Ciudad de México."
+ },
+ {
+  "start": 150.2,
+  "end": 155.97,
+  "text": "Nos da igual si es São Paulo o Virginia, siempre que cumpla los doscientos milisegundos."
+ },
+ {
+  "start": 156.27,
+  "end": 156.65,
+  "text": "Perfecto."
+ },
+ {
+  "start": 156.95,
+  "end": 158.88,
+  "text": "Hablemos de tiempos y presupuesto."
+ },
+ {
+  "start": 159.18,
+  "end": 160.72,
+  "text": "El tiempo es crítico."
+ },
+ {
+  "start": 161.02,
+  "end": 166.4,
+  "text": "En enero lanzamos el \"Reto de Año Nuevo\" y el tráfico se nos triplica."
+ },
+ {
+  "start": 166.7,
+  "end": 169.78,
+  "text": "Necesitamos un MVP en producción en diez semanas."
+ },
+ {
+  "start": 170.08,
+  "end": 176.23,
+  "text": "Para la consultoría e implementación de esta primera fase tenemos un presupuesto de veinticinco mil dólares."
+ },
+ {
+  "start": 176.53,
+  "end": 182.68,
+  "text": "Y el costo mensual de AWS de la solución no debería pasar de ocho mil dólares."
+ },
+ {
+  "start": 182.98,
+  "end": 185.29,
+  "text": "¿Cómo van a medir el éxito?"
+ },
+ {
+  "start": 185.59,
+  "end": 190.59,
+  "text": "Hoy el dieciocho por ciento de las clases se inician desde una recomendación."
+ },
+ {
+  "start": 190.89,
+  "end": 193.2,
+  "text": "Queremos llegar al treinta por ciento."
+ },
+ {
+  "start": 193.5,
+  "end": 194.27,
+  "text": "Muy claro."
+ },
+ {
+  "start": 194.57,
+  "end": 209.57,
+  "text": "Te resumo: recomendaciones en tiempo real por debajo de doscientos milisegundos, reentrenamiento diario, servicios administrados sin Kubernetes, MVP en diez semanas antes de enero, veinticinco mil dólares para la fase uno y máximo ocho mil al mes en AWS."
+ },
+ {
+  "start": 209.87,
+  "end": 211.02,
+  "text": "¿Me falta algo?"
+ },
+ {
+  "start": 211.32,
+  "end": 215.55,
+  "text": "Solo una cosa: que la propuesta incluya la orquestación del reentrenamiento."
+ },
+ {
+  "start": 215.85,
+  "end": 220.08,
+  "text": "Hoy, si el script falla en la madrugada, nadie se entera."
+ },
+ {
+  "start": 220.38,
+  "end": 221.54,
+  "text": "Perfecto, lo incluimos."
+ },
+ {
+  "start": 221.84,
+  "end": 225.68,
+  "text": "Te enviamos la propuesta con servicios y precios esta semana."
+ },
+ {
+  "start": 225.98,
+  "end": 226.75,
+  "text": "Gracias, Mateo."
+ }
+]

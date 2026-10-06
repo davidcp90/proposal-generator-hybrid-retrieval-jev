@@ -1,0 +1,13 @@
+flask
+python-dotenv
+requests
+pandas
+langchain>=1.0
+langchain-openai
+langchain-community
+langgraph
+faiss-cpu
+openai
+python-frontmatter
+diagrams            # needs Graphviz installed on the system (brew install graphviz / apt install graphviz)
+# openai-whisper    # optional: only to upload audio; without it, upload the .json transcript

@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>RAGLabChatbot</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+:root {
+  --gradient-start: #2E4590;
+  --gradient-mid: #3A1D8A;
+  --gradient-end: #2A0059;
+  --ai-msg-bg: #3A1D8A;
+  --user-msg-bg: #ffffff;
+  --input-bg: rgba(30, 0, 65, 0.8);
+  --text-dark: #333333;
+  --text-light: #ffffff;
+  --purple-dark: rgba(58, 29, 138, 1);
+  --purple-dark-transparent: rgba(58, 29, 138, 0.25);
+  --purple-blue: rgba(46, 69, 144, 1);
+}
+
+html {
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  margin: 0;
+  padding: 0;
+  box-sizing: inherit;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: radial-gradient(ellipse at top left, var(--gradient-start) 0%, var(--gradient-mid) 50%, var(--gradient-end) 100%);
+  font-family: 'Roboto Condensed', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+}
+
+.msger {
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: space-between;
+  width: 50%;
+  height: 100vh;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
+
+.msger-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 20px 10px 20px;
+  background: transparent;
+  border: none;
+}
+
+.header-left {
+  display: none;
+}
+
+.menu-button {
+  display: none;
+}
+
+.score-circle {
+  display: none;
+}
+
+.msger-header-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-light);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.aural-avatar {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #000;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(58, 29, 138, 0.5), inset 0 0 30px rgba(46, 69, 144, 0.3);
+}
+
+.aural-avatar::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 30% 30%, rgba(58, 29, 138, 0.8) 0%, rgba(46, 69, 144, 0.4) 30%, transparent 70%);
+  animation: pulse 3s ease-in-out infinite;
+}
+
+.aural-avatar::after {
+  content: '';
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  background: conic-gradient(from 0deg, transparent, rgba(58, 29, 138, 0.3), transparent, rgba(46, 69, 144, 0.3), transparent);
+  animation: rotate 8s linear infinite;
+  border-radius: 50%;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(58, 29, 138, 1), 0 0 12px rgba(46, 69, 144, 0.8);
+  animation: float 4s ease-in-out infinite;
+}
+
+.particle:nth-child(1) {
+  top: 20%;
+  left: 30%;
+  animation-delay: 0s;
+  animation-duration: 3s;
+}
+
+.particle:nth-child(2) {
+  top: 50%;
+  left: 60%;
+  animation-delay: 0.5s;
+  animation-duration: 4s;
+}
+
+.particle:nth-child(3) {
+  top: 70%;
+  left: 25%;
+  animation-delay: 1s;
+  animation-duration: 3.5s;
+}
+
+.particle:nth-child(4) {
+  top: 30%;
+  left: 70%;
+  animation-delay: 1.5s;
+  animation-duration: 4.5s;
+}
+
+.particle:nth-child(5) {
+  top: 60%;
+  left: 45%;
+  animation-delay: 2s;
+  animation-duration: 3s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.6;
+  }
+  25% {
+    transform: translate(10px, -10px) scale(1.2);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-5px, 5px) scale(0.8);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translate(-10px, -5px) scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+.light-trail {
+  position: absolute;
+  width: 2px;
+  height: 40px;
+  background: linear-gradient(to bottom, transparent, rgba(58, 29, 138, 0.8), transparent);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
+  animation: trail-rotate 6s linear infinite;
+  box-shadow: 0 0 10px rgba(58, 29, 138, 0.6);
+}
+
+.light-trail:nth-child(6) {
+  animation-delay: 0s;
+  transform: translate(-50%, -50%) rotate(0deg) translateY(-25px);
+}
+
+.light-trail:nth-child(7) {
+  animation-delay: 2s;
+  transform: translate(-50%, -50%) rotate(120deg) translateY(-25px);
+}
+
+.light-trail:nth-child(8) {
+  animation-delay: 4s;
+  transform: translate(-50%, -50%) rotate(240deg) translateY(-25px);
+}
+
+@keyframes trail-rotate {
+  0% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) rotate(0deg) translateY(-25px);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) rotate(360deg) translateY(-25px);
+  }
+}
+
+.chat-glass-container {
+  flex: 1;
+  display: flex;               /* lets .msger-chat take the remaining height and scroll */
+  flex-direction: column;
+  margin: 0 20px 20px 20px;
+  border-radius: 20px;
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  background: rgba(58, 29, 138, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(20, 15, 80, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2),
+              inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
+}
+
+.chat-glass-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.chat-glass-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.msger-chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.msger-chat::-webkit-scrollbar {
+  width: 8px;
+}
+
+.msger-chat::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.msger-chat::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.msger-chat::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.msg {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 0;
+}
+
+.msg-img {
+  display: none;
+}
+
+.msg-bubble {
+  max-width: 70%;
+  padding: 15px 20px;
+  border-radius: 25px;
+  background: var(--ai-msg-bg);
+  color: var(--text-light);
+  word-wrap: break-word;
+  position: relative;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(58, 29, 138, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(20, 15, 80, 0.37),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+}
+
+.msg-bubble::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.msg-info {
+  display: none;
+}
+
+.msg-text {
+  font-size: 16px;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+.left-msg {
+  justify-content: flex-start;
+}
+
+.left-msg .msg-bubble {
+  background: rgba(58, 29, 138, 0.25);
+  color: var(--text-light);
+  border-radius: 25px;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(20, 15, 80, 0.37),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.right-msg {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.right-msg .msg-bubble {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-dark);
+  border-radius: 25px;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(58, 29, 138, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(58, 29, 138, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8),
+              0 0 0 1px rgba(58, 29, 138, 0.2);
+}
+
+.msger-inputarea {
+  display: flex;
+  padding: 20px;
+  background: transparent;
+  border: none;
+  gap: 10px;
+}
+
+.msger-input {
+  flex: 1;
+  background: var(--input-bg);
+  border: none;
+  border-radius: 25px;
+  padding: 15px 20px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  outline: none;
+}
+
+.msger-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.msger-send-btn {
+  display: none;
+}
+
+/* Proposals come back as Markdown with tables */
+.msg-text table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+
+.msg-text th,
+.msg-text td {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 4px 8px;
+}
+
+.msg-text ul,
+.msg-text ol {
+  padding-left: 20px;
+}
+
+.upload-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.upload-client {
+  flex: 1;
+  min-width: 120px;
+  background: var(--input-bg);
+  border: none;
+  border-radius: 20px;
+  padding: 10px 15px;
+  font-size: 14px;
+  color: var(--text-light);
+  outline: none;
+}
+
+.upload-btn {
+  background: var(--text-light);
+  color: var(--purple-dark);
+  border: none;
+  border-radius: 20px;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.upload-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+/* Loader: three bouncing dots while the server works */
+.typing {
+  display: inline-flex;
+  gap: 4px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.typing span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  animation: typing-bounce 1.2s ease-in-out infinite;
+}
+
+.typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
+}
+
+.loader-label {
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* Jev result under each answer */
+.checks {
+  margin-top: 10px;
+  padding-top: 8px;
+  font-size: 13px;
+  opacity: 0.85;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Diagram and slide */
+.msg-text img {
+  display: block;
+  max-width: 100%;
+  margin: 8px 0 12px;
+  border-radius: 12px;
+  background: #ffffff;
+}
+</style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+
+<body>
+  <!-- partial:index.partial.html -->
+  <section class="msger">
+    <header class="msger-header">
+      <div class="msger-header-title">
+        <div class="aural-avatar">
+          <div class="particle"></div>
+          <div class="particle"></div>
+          <div class="particle"></div>
+          <div class="particle"></div>
+          <div class="particle"></div>
+          <div class="light-trail"></div>
+          <div class="light-trail"></div>
+          <div class="light-trail"></div>
+        </div>
+        NubeAndina
+      </div>
+    </header>
+
+    <div class="chat-glass-container">
+      <main class="msger-chat">
+      <div class="msg left-msg">
+        <div class="msg-img" style="background-image: url(https://image.flaticon.com/icons/svg/327/327779.svg)"></div>
+
+        <div class="msg-bubble">
+          <div class="msg-info">
+            <div class="msg-info-name">Fukuro</div>
+            <div class="msg-info-time">12:45</div>
+          </div>
+
+          <div class="msg-text">
+            Generador de propuestas de NubeAndina. Empieza subiendo la consulta (audio de la llamada o transcripción .json); luego indica el cliente y la necesidad, y armo la propuesta técnica y comercial.
+            <form class="upload-form" id="uploadForm">
+              <input type="text" class="upload-client" id="uploadClient" placeholder="Cliente (p. ej. ritmofit)" autocomplete="off">
+              <input type="file" id="uploadFile" accept="audio/*,.json" hidden>
+              <button type="submit" class="upload-btn" id="uploadBtn">📤 Subir consulta</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </main>
+    </div>
+
+    <form class="msger-inputarea">
+      <input type="text" autocomplete="off" class="msger-input" id="textInput" placeholder="Message">
+      <button type="submit" class="msger-send-btn" style="display: none;">Send</button>
+    </form>
+  </section>
+  <!-- partial -->
+  <script src='https://use.fontawesome.com/releases/v5.0.13/js/all.js'></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+
+    const msgerForm = get(".msger-inputarea");
+    const msgerInput = get(".msger-input");
+    const msgerChat = get(".msger-chat");
+
+
+    // Icons made by Freepik from www.flaticon.com
+    const BOT_IMG = "https://image.flaticon.com/icons/svg/327/327779.svg";
+    const PERSON_IMG = "https://image.flaticon.com/icons/svg/145/145867.svg";
+    const BOT_NAME = "    ChatBot";
+    const PERSON_NAME = "You";
+
+    msgerForm.addEventListener("submit", event => {
+      event.preventDefault();
+
+      const msgText = msgerInput.value;
+      if (!msgText) return;
+
+      appendMessage(PERSON_NAME, PERSON_IMG, "right", msgText);
+      msgerInput.value = "";
+      botResponse(msgText);
+    });
+
+    function appendMessage(name, img, side, text) {
+      //   Simple solution for small apps
+      const msgHTML = `
+<div class="msg ${side}-msg">
+  <div class="msg-img" style="background-image: url(${img})"></div>
+
+  <div class="msg-bubble">
+    <div class="msg-info">
+      <div class="msg-info-name">${name}</div>
+      <div class="msg-info-time">${formatDate(new Date())}</div>
+    </div>
+
+    <div class="msg-text">${text}</div>
+  </div>
+</div>
+`;
+
+      msgerChat.insertAdjacentHTML("beforeend", msgHTML);
+      scrollToBottom();
+    }
+
+    // Shows a "typing" bubble; returns it so the caller can remove it
+    function showLoader(label) {
+      msgerChat.insertAdjacentHTML("beforeend", `
+<div class="msg left-msg">
+  <div class="msg-bubble">
+    <div class="msg-text"><span class="typing"><span></span><span></span><span></span></span><span class="loader-label">${label}</span></div>
+  </div>
+</div>`);
+      scrollToBottom();
+      return msgerChat.lastElementChild;
+    }
+
+    function scrollToBottom() {
+      msgerChat.scrollTop = msgerChat.scrollHeight;
+    }
+
+    session_id = Math.random().toString(36).substring(2, 6)
+
+    function botResponse(rawText) {
+      const loader = showLoader("Consultando la llamada y el catálogo…");
+      msgerInput.disabled = true;          // one question at a time per session
+      $.post("/ask_bot", { msg: rawText, session_id: session_id })
+        .done(data => {
+          appendMessage(BOT_NAME, BOT_IMG, "left", marked.parse(data.msg) + checksBadge(data.checks));
+          if (data.visuals) requestVisuals(data.msg);
+        })
+        .fail(() => appendMessage(BOT_NAME, BOT_IMG, "left",
+          "⚠️ Error del servidor. Revisa la salida de la celda del servidor en Colab."))
+        .always(() => {
+          loader.remove();
+          msgerInput.disabled = false;
+          msgerInput.focus();
+        });
+    }
+
+    // Jev result line; checks is undefined on servers without Jev, null if Jev failed
+    function checksBadge(c) {
+      if (c === undefined) return "";
+      if (c === null) return `<div class="checks">🛡️ Sin revisión de Jev</div>`;
+      const mark = v => (v >= 0.5 ? "✔" : "✖");
+      return `<div class="checks">🛡️ Jev · tipo: ${c.type} · precios ${mark(c.prices_ok)} ${c.prices_ok}` +
+             ` · restricciones ${mark(c.constraints_ok)} ${c.constraints_ok} · cobertura ${c.coverage}/3</div>`;
+    }
+
+    function imageTag(src, alt) {
+      return `<a href="${src}" target="_blank"><img src="${src}" alt="${alt}"></a>`;
+    }
+
+    // Proposals: diagram with AWS icons + slide from the image model
+    function requestVisuals(proposal) {
+      const loader = showLoader("Dibujando la arquitectura y generando la diapositiva…");
+      const usd = n => Math.round(n).toLocaleString("en-US");
+      $.ajax({ url: "/visuals", type: "POST", contentType: "application/json", data: JSON.stringify({ proposal }) })
+        .done(v => appendMessage(BOT_NAME, BOT_IMG, "left",
+          `<b>Arquitectura propuesta</b>${imageTag(v.diagram, "Diagrama de arquitectura")}` +
+          `<b>Diapositiva</b> · consultoría USD ${usd(v.totals.consulting)} · AWS USD ${usd(v.totals.aws_monthly)} / mes` +
+          imageTag(v.slide, "Diapositiva de la propuesta")))
+        .fail(() => appendMessage(BOT_NAME, BOT_IMG, "left",
+          "⚠️ No pude generar las imágenes. Revisa la salida de la celda del servidor en Colab."))
+        .always(() => loader.remove());
+    }
+
+    // Upload consultation: the button opens the file picker, picking a file uploads it
+    const uploadForm = get("#uploadForm");
+    const uploadFile = get("#uploadFile");
+    const uploadClient = get("#uploadClient");
+    const uploadBtn = get("#uploadBtn");
+
+    uploadForm.addEventListener("submit", event => {
+      event.preventDefault();
+      uploadFile.click();
+    });
+
+    uploadFile.addEventListener("change", () => {
+      const file = uploadFile.files[0];
+      if (!file) return;
+      const client = uploadClient.value.trim() || "cliente";
+      const data = new FormData();
+      data.append("audio", file);
+      data.append("client", client);
+
+      appendMessage(PERSON_NAME, PERSON_IMG, "right", `📎 ${file.name} · ${client}`);
+      uploadBtn.disabled = true;
+      const label = file.name.endsWith(".json") ? "Indexando la transcripción…" : "Transcribiendo la llamada con Whisper…";
+      const loader = showLoader(label);
+
+      fetch("/upload_audio", { method: "POST", body: data })
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(res => appendMessage(BOT_NAME, BOT_IMG, "left",
+          `✅ Consulta de <b>${res.client}</b> procesada: ${res.minutes} min, ${res.chunks} fragmentos indexados.<br>` +
+          `Ahora pide la propuesta, por ejemplo: <i>Genera la propuesta para ${res.client}</i>.`))
+        .catch(() => appendMessage(BOT_NAME, BOT_IMG, "left",
+          "⚠️ No pude procesar el archivo. Revisa la salida de la celda del servidor en Colab."))
+        .finally(() => {
+          loader.remove();
+          uploadBtn.disabled = false;
+          uploadFile.value = "";
+        });
+    });
+
+
+    // Utils
+    function get(selector, root = document) {
+      return root.querySelector(selector);
+    }
+
+    function formatDate(date) {
+      const h = "0" + date.getHours();
+      const m = "0" + date.getMinutes();
+
+      return `${h.slice(-2)}:${m.slice(-2)}`;
+    }
+
+
+
+  </script>
+
+</body>
+
+</html>
