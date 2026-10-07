@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<!--
+  Copyright 2026 Google LLC
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OKF Bundle Viewer</title>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<style>
+/*
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 14px;
+  color: #0f172a;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+.title strong { font-size: 16px; margin-right: 8px; }
+.muted { color: #64748b; font-size: 12px; }
+.controls { display: flex; gap: 8px; }
+.controls input, .controls select, .controls button {
+  font-size: 13px;
+  padding: 5px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: #fff;
+}
+.controls input { width: 220px; }
+.controls button { cursor: pointer; background: #f1f5f9; }
+.controls button:hover { background: #e2e8f0; }
+
+main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+#graph {
+  flex: 1 1 60%;
+  background: #fff;
+  border-right: 1px solid #e2e8f0;
+  min-width: 0;
+  position: relative;
+}
+#detail {
+  flex: 0 0 40%;
+  overflow-y: auto;
+  padding: 18px 22px;
+  background: #fff;
+}
+#detail-empty {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.detail-header { margin-bottom: 12px; }
+.detail-header h1 {
+  font-size: 18px;
+  margin: 4px 0 2px;
+  font-weight: 600;
+}
+.type-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+dl.frontmatter {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  row-gap: 4px;
+  column-gap: 12px;
+  margin: 8px 0 12px;
+  font-size: 13px;
+}
+dl.frontmatter dt {
+  color: #64748b;
+  font-weight: 500;
+}
+dl.frontmatter dd { margin: 0; }
+dl.frontmatter a { color: #2563eb; word-break: break-all; }
+
+.tag {
+  display: inline-block;
+  padding: 1px 6px;
+  margin: 0 4px 2px 0;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 4px;
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+.badge.status-stable { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.badge.status-draft { background: #fefce8; color: #a16207; border-color: #fde68a; }
+.badge.status-deprecated { background: #f1f5f9; color: #64748b; border-color: #cbd5e1; text-decoration: line-through; }
+.badge.trust-unverified { background: #f1f5f9; color: #64748b; border-color: #cbd5e1; }
+.badge.trust-machine-confirmed { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.badge.trust-human-reviewed { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
+.badge.stale { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.badge.fresh { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+
+.sources-list { padding-left: 18px; margin: 0; }
+.sources-list li { margin: 1px 0; }
+
+hr { border: none; border-top: 1px solid #e2e8f0; margin: 14px 0; }
+
+#detail-body { font-size: 13px; line-height: 1.55; }
+#detail-body h1 {
+  font-size: 16px; margin: 18px 0 6px;
+  padding-bottom: 4px; border-bottom: 1px solid #e2e8f0;
+}
+#detail-body h2 { font-size: 14px; margin: 14px 0 4px; }
+#detail-body h3 { font-size: 13px; margin: 12px 0 4px; }
+#detail-body p { margin: 6px 0; }
+#detail-body code {
+  background: #f1f5f9;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+}
+#detail-body pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 12px;
+}
+#detail-body pre code { background: transparent; color: inherit; padding: 0; }
+#detail-body ul, #detail-body ol { padding-left: 22px; margin: 6px 0; }
+#detail-body li { margin: 2px 0; }
+#detail-body table { border-collapse: collapse; margin: 8px 0; }
+#detail-body th, #detail-body td {
+  border: 1px solid #e2e8f0; padding: 4px 8px; font-size: 12px;
+}
+#detail-body a.internal { color: #2563eb; cursor: pointer; }
+#detail-body a.external { color: #2563eb; }
+
+#detail-backlinks { margin-top: 18px; }
+#detail-backlinks h2 { font-size: 13px; color: #64748b; margin-bottom: 6px; }
+#detail-backlinks ul { padding-left: 18px; }
+#detail-backlinks a { color: #2563eb; cursor: pointer; }
+
+</style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <strong id="bundle-name"></strong>
+    <span class="muted">OKF bundle</span>
+  </div>
+  <div class="controls">
+    <input id="search" type="search" placeholder="Search title / id / tag">
+    <select id="filter-type">
+      <option value="">All types</option>
+    </select>
+    <select id="layout">
+      <option value="cose">cose (force)</option>
+      <option value="concentric">concentric</option>
+      <option value="breadthfirst">breadth-first</option>
+      <option value="circle">circle</option>
+      <option value="grid">grid</option>
+    </select>
+    <button id="reset">Reset view</button>
+  </div>
+</header>
+
+<main>
+  <section id="graph"></section>
+  <section id="detail">
+    <div id="detail-empty" class="muted">Click a node to see its details.</div>
+    <article id="detail-content" hidden>
+      <header class="detail-header">
+        <span class="type-chip" id="detail-type"></span>
+        <h1 id="detail-title"></h1>
+        <div class="muted" id="detail-id"></div>
+      </header>
+      <div class="badges" id="detail-badges"></div>
+      <dl class="frontmatter">
+        <dt>Description</dt><dd id="detail-description"></dd>
+        <dt>Resource</dt><dd id="detail-resource"></dd>
+        <dt>Tags</dt><dd id="detail-tags"></dd>
+        <dt>Generated</dt><dd id="detail-generated"></dd>
+        <dt>Verified</dt><dd id="detail-verified"></dd>
+        <dt>Sources</dt><dd id="detail-sources"></dd>
+      </dl>
+      <hr>
+      <div id="detail-body"></div>
+      <section id="detail-backlinks" hidden>
+        <h2>Cited by</h2>
+        <ul id="backlinks-list"></ul>
+      </section>
+    </article>
+  </section>
+</main>
+
+<script>
+window.BUNDLE_NAME = "NubeAndina OKF";
+window.BUNDLE = {"nodes": [{"data": {"id": "aws/basics/dynamodb", "label": "Amazon DynamoDB", "type": "Concept", "description": "", "resource": "https://aws.amazon.com/dynamodb/", "tags": ["nosql", "baja-latencia", "feature-store"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 30}}, {"data": {"id": "aws/basics/eks", "label": "Amazon EKS", "type": "Concept", "description": "", "resource": "https://aws.amazon.com/eks/", "tags": ["kubernetes", "contenedores"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 31}}, {"data": {"id": "aws/basics/emr", "label": "Amazon EMR", "type": "Concept", "description": "", "resource": "https://aws.amazon.com/emr/", "tags": ["spark", "batch"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 31}}, {"data": {"id": "aws/basics/msk", "label": "Amazon MSK", "type": "Concept", "description": "", "resource": "https://aws.amazon.com/msk/", "tags": ["streaming", "eventos", "kafka"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 30}}, {"data": {"id": "aws/basics/mwaa", "label": "Amazon MWAA", "type": "Concept", "description": "", "resource": "https://aws.amazon.com/managed-workflows-for-apache-airflow/", "tags": ["orquestacion", "airflow"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 30}}, {"data": {"id": "aws/basics/neptune", "label": "Amazon Neptune", "type": "Concept", "description": "", "resource": "https://aws.amazon.com/neptune/", "tags": ["grafo"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 31}}, {"data": {"id": "aws/basics/pricing-models", "label": "Costos AWS de referencia para un MVP de recomendaciones", "type": "Concept", "description": "Valores ILUSTRATIVOS para el laboratorio. No son una cotizaci\u00f3n de AWS.", "resource": "", "tags": ["precios-aws", "estimacion"], "status": "draft", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 34}}, {"data": {"id": "aws/basics/s3", "label": "Amazon S3", "type": "Concept", "description": "", "resource": "https://aws.amazon.com/s3/", "tags": ["almacenamiento", "data-lake"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 30}}, {"data": {"id": "aws/basics/sagemaker", "label": "Amazon SageMaker", "type": "Concept", "description": "", "resource": "https://aws.amazon.com/sagemaker/", "tags": ["ml", "inferencia", "entrenamiento"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 31}}, {"data": {"id": "aws/patterns/recomendaciones-tiempo-real", "label": "Patr\u00f3n de recomendaciones en tiempo real", "type": "Pattern", "description": "Arquitectura de referencia inspirada en el caso p\u00fablico de Peloton en AWS.", "resource": "https://www.youtube.com/watch?v=ym_Gz_zH7w8", "tags": ["ml", "recomendaciones", "referencia"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 35}}, {"data": {"id": "company/about", "label": "NubeAndina Consulting", "type": "Company", "description": "Consultora AWS ficticia para el laboratorio. Oficinas en Bogot\u00e1 y Ciudad de M\u00e9xico.", "resource": "", "tags": ["empresa", "condiciones"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 33}}, {"data": {"id": "company/rate-card", "label": "Tarifas NubeAndina Consulting 2026", "type": "RateCard", "description": "Precios oficiales de consultor\u00eda AWS. \u00danica fuente v\u00e1lida de precios.", "resource": "", "tags": ["precios", "consultoria"], "status": "stable", "generated": {}, "verified": [], "stale_after": "2027-03-31", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 33}}, {"data": {"id": "company/services/assessment", "label": "Assessment de arquitectura", "type": "Service", "description": "Diagn\u00f3stico de 1 semana del estado actual y la arquitectura objetivo.", "resource": "", "tags": ["assessment", "descubrimiento"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 32}}, {"data": {"id": "company/services/managed-ops", "label": "Operaci\u00f3n gestionada", "type": "Service", "description": "Operaci\u00f3n mensual de la plataforma despu\u00e9s del go-live.", "resource": "", "tags": ["operacion", "soporte"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 30}}, {"data": {"id": "company/services/migration", "label": "Migraci\u00f3n lift-and-shift", "type": "Service", "description": "Mover un workload existente a AWS sin redise\u00f1arlo.", "resource": "", "tags": ["migracion"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 30}}, {"data": {"id": "company/services/mlops-pipeline", "label": "Pipeline MLOps", "type": "Service", "description": "Entrenamiento diario automatizado, registro de modelos, orquestaci\u00f3n y alertas.", "resource": "", "tags": ["ml", "mlops", "orquestacion"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 31}}, {"data": {"id": "company/services/realtime-recs-platform", "label": "Plataforma de recomendaciones en tiempo real", "type": "Service", "description": "MVP de inferencia en l\u00ednea con contexto, sobre servicios administrados de AWS.", "resource": "", "tags": ["ml", "recomendaciones", "tiempo-real"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 33}}, {"data": {"id": "company/services/well-architected-review", "label": "Well-Architected Review", "type": "Service", "description": "Revisi\u00f3n de una carga existente contra el AWS Well-Architected Framework.", "resource": "", "tags": ["revision", "buenas-practicas"], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 31}}, {"data": {"id": "log", "label": "log", "type": "Log", "description": "", "resource": "", "tags": [], "status": "stable", "generated": {}, "verified": [], "stale_after": "", "sources": [], "trust_tier": "unverified", "stale": false, "color": "#94a3b8", "size": 30}}], "edges": [{"data": {"id": "aws/patterns/recomendaciones-tiempo-real__company/services/realtime-recs-platform", "source": "aws/patterns/recomendaciones-tiempo-real", "target": "company/services/realtime-recs-platform"}}, {"data": {"id": "aws/patterns/recomendaciones-tiempo-real__company/services/mlops-pipeline", "source": "aws/patterns/recomendaciones-tiempo-real", "target": "company/services/mlops-pipeline"}}, {"data": {"id": "company/rate-card__company/services/assessment", "source": "company/rate-card", "target": "company/services/assessment"}}, {"data": {"id": "company/rate-card__company/services/realtime-recs-platform", "source": "company/rate-card", "target": "company/services/realtime-recs-platform"}}, {"data": {"id": "company/rate-card__company/services/mlops-pipeline", "source": "company/rate-card", "target": "company/services/mlops-pipeline"}}, {"data": {"id": "company/rate-card__company/services/migration", "source": "company/rate-card", "target": "company/services/migration"}}, {"data": {"id": "company/rate-card__company/services/well-architected-review", "source": "company/rate-card", "target": "company/services/well-architected-review"}}, {"data": {"id": "company/rate-card__company/services/managed-ops", "source": "company/rate-card", "target": "company/services/managed-ops"}}, {"data": {"id": "company/services/assessment__company/services/realtime-recs-platform", "source": "company/services/assessment", "target": "company/services/realtime-recs-platform"}}, {"data": {"id": "company/services/assessment__company/services/mlops-pipeline", "source": "company/services/assessment", "target": "company/services/mlops-pipeline"}}, {"data": {"id": "company/services/assessment__company/rate-card", "source": "company/services/assessment", "target": "company/rate-card"}}, {"data": {"id": "company/services/managed-ops__company/rate-card", "source": "company/services/managed-ops", "target": "company/rate-card"}}, {"data": {"id": "company/services/migration__company/rate-card", "source": "company/services/migration", "target": "company/rate-card"}}, {"data": {"id": "company/services/mlops-pipeline__company/rate-card", "source": "company/services/mlops-pipeline", "target": "company/rate-card"}}, {"data": {"id": "company/services/realtime-recs-platform__company/services/mlops-pipeline", "source": "company/services/realtime-recs-platform", "target": "company/services/mlops-pipeline"}}, {"data": {"id": "company/services/realtime-recs-platform__aws/patterns/recomendaciones-tiempo-real", "source": "company/services/realtime-recs-platform", "target": "aws/patterns/recomendaciones-tiempo-real"}}, {"data": {"id": "company/services/realtime-recs-platform__company/rate-card", "source": "company/services/realtime-recs-platform", "target": "company/rate-card"}}, {"data": {"id": "company/services/well-architected-review__company/rate-card", "source": "company/services/well-architected-review", "target": "company/rate-card"}}], "bodies": {"aws/basics/dynamodb": "# Amazon DynamoDB\nBase clave-valor totalmente administrada, latencia de milisegundos de un d\u00edgito.\nPatr\u00f3n com\u00fan como feature store en l\u00ednea. Modo on-demand: se paga por lectura/escritura.", "aws/basics/eks": "# Amazon EKS\nKubernetes administrado. Muy flexible (por ejemplo, GPUs para entrenamiento), pero requiere un equipo con\nexperiencia en Kubernetes para operarlo. Si el cliente no la tiene, preferir SageMaker.", "aws/basics/emr": "# Amazon EMR\nCl\u00fasteres Spark administrados (o EMR Serverless). Ideal para preprocesar el historial diario y poblar\nel feature store y el grafo. Cobro por hora de c\u00f3mputo; los jobs diarios cortos mantienen el costo bajo.", "aws/basics/msk": "# Amazon MSK\nApache Kafka administrado. MSK Serverless evita dimensionar brokers. Alternativa m\u00e1s simple para\nequipos peque\u00f1os: Amazon Kinesis Data Streams.", "aws/basics/mwaa": "# Amazon MWAA\nApache Airflow administrado para orquestar el pipeline diario (preprocesar, entrenar, registrar, desplegar),\ncon reintentos y alertas.", "aws/basics/neptune": "# Amazon Neptune\nBase de datos de grafos administrada. Modela miembros, clases e instructores como nodos y las clases\ntomadas como aristas, para generar candidatos de recomendaci\u00f3n. Existe en modo serverless.", "aws/basics/pricing-models": "# Costos AWS de referencia (ilustrativos)\n\nEscenario: ~200.000 miembros, inferencia en l\u00ednea < 200 ms, reentrenamiento diario.\nValores aproximados en USD por mes, solo para el laboratorio. Validar siempre con AWS Pricing Calculator.\n\n| Servicio | Uso supuesto | USD/mes (rango) |\n| --- | --- | --- |\n| S3 | 4 TB de historial + eventos | 90 \u2013 120 |\n| DynamoDB | feature store on-demand | 300 \u2013 600 |\n| Neptune | grafo, serverless peque\u00f1o | 400 \u2013 800 |\n| SageMaker | 2 instancias de endpoint + entrenamiento diario | 500 \u2013 900 |\n| API Gateway + Lambda | API de recomendaciones | 100 \u2013 250 |\n| MSK Serverless o Kinesis | eventos de recomendaciones | 300 \u2013 800 |\n| EMR | jobs Spark diarios | 300 \u2013 700 |\n| MWAA | entorno peque\u00f1o | 350 \u2013 450 |\n| CloudWatch + SNS | m\u00e9tricas, logs, alertas | 50 \u2013 150 |\n| **Total estimado** | | **2,390 \u2013 4,770** |", "aws/basics/s3": "# Amazon S3\nAlmacenamiento de objetos. Se usa como data lake del historial y destino de eventos para reentrenar.\nCobro por GB almacenado al mes y por solicitudes.", "aws/basics/sagemaker": "# Amazon SageMaker\nEntrenamiento administrado, registro de modelos y endpoints de inferencia en tiempo real con autoescalado.\nRecomendado para equipos sin experiencia en Kubernetes: no hay cl\u00fasteres que operar.", "aws/patterns/recomendaciones-tiempo-real": "# Patr\u00f3n: recomendaciones en tiempo real\n\nReferencia p\u00fablica: Peloton, serie \"This Is My Architecture\" de AWS.\n\n## Ruta batch (diaria)\n1. Historial de miembros en S3.\n2. Preprocesamiento con Spark en EMR; los mismos jobs pueblan el feature store y el grafo.\n3. Entrenamiento (en el caso de referencia, en EKS con GPUs) y registro del modelo.\n4. Orquestaci\u00f3n con Airflow en MWAA.\n\n## Ruta en l\u00ednea (cada vez que el miembro inicia una sesi\u00f3n)\n1. El dispositivo llama a un servicio que pide las recomendaciones.\n2. Un orquestador obtiene features (DynamoDB), candidatos (grafo) y el modelo vigente.\n3. Un servicio de inferencia punt\u00faa los candidatos y devuelve la lista ordenada.\n4. Lo recomendado se registra como evento (MSK) y llega a S3: ciclo de retroalimentaci\u00f3n para reentrenar.\n\n## Variante para equipos peque\u00f1os\n- Sin experiencia en Kubernetes: reemplazar EKS por entrenamiento y endpoints de SageMaker.\n- MSK Serverless o Kinesis Data Streams en lugar de un cl\u00faster MSK dimensionado a mano.\n- Servicios de consultor\u00eda que lo implementan: [plataforma](../../company/services/realtime-recs-platform.md)\n  y [pipeline MLOps](../../company/services/mlops-pipeline.md).", "company/about": "# NubeAndina Consulting\n\nConsultora ficticia especializada en arquitectura, datos y ML sobre AWS. Equipo en Bogot\u00e1 y Ciudad de M\u00e9xico.\n\n## C\u00f3mo trabajamos\n1. Assessment: entendemos la necesidad y el estado actual.\n2. Dise\u00f1o e implementaci\u00f3n por fases, con entregas cada 2 semanas.\n3. Operaci\u00f3n gestionada opcional.\n\n## Condiciones comerciales\n- Precios en USD, sin impuestos.\n- 50 % al inicio y 50 % a la entrega.\n- Vigencia de la propuesta: 30 d\u00edas.\n- Los costos de AWS los paga el cliente directamente a AWS; no est\u00e1n incluidos en nuestras tarifas.\n- Solo ofrecemos servicios sobre AWS. No ofrecemos servicios sobre Azure ni Google Cloud.", "company/rate-card": "# Tarifas 2026 (USD)\n\n| Servicio | Unidad | Precio |\n| --- | --- | --- |\n| [Assessment de arquitectura](services/assessment.md) | paquete 1 semana | 1,800 |\n| [Plataforma de recomendaciones en tiempo real](services/realtime-recs-platform.md) | paquete MVP | 9,500 |\n| [Pipeline MLOps: entrenamiento diario, orquestaci\u00f3n y alertas](services/mlops-pipeline.md) | paquete | 7,000 |\n| [Migraci\u00f3n lift-and-shift](services/migration.md) | por workload | 4,500 |\n| [Well-Architected Review](services/well-architected-review.md) | paquete | 2,200 |\n| [Operaci\u00f3n gestionada](services/managed-ops.md) | mensual | 900 |\n| Arquitecto cloud senior | hora | 95 |\n\nCualquier servicio que no est\u00e9 en esta tabla no se ofrece ni se cotiza.", "company/services/assessment": "# Assessment de arquitectura\n\n- Duraci\u00f3n: 1 semana.\n- Alcance: entrevistas, revisi\u00f3n de datos y sistemas actuales, requisitos no funcionales (latencia, costo, equipo).\n- Entregables: arquitectura objetivo, plan por fases, estimaci\u00f3n de costos AWS.\n- Requisito previo para la [plataforma de recomendaciones](realtime-recs-platform.md) y el [pipeline MLOps](mlops-pipeline.md).\n- Precio: ver [tarifas](../rate-card.md).", "company/services/managed-ops": "# Operaci\u00f3n gestionada\n\n- Monitoreo 8x5, respuesta a incidentes, parches y reporte mensual de costos.\n- Precio: mensual, ver [tarifas](../rate-card.md).", "company/services/migration": "# Migraci\u00f3n lift-and-shift\n\n- Duraci\u00f3n: 2 a 3 semanas por workload.\n- Alcance: inventario, migraci\u00f3n a EC2/RDS, pruebas y corte.\n- Precio: por workload, ver [tarifas](../rate-card.md).", "company/services/mlops-pipeline": "# Pipeline MLOps\n\n- Duraci\u00f3n: 3 a 4 semanas (puede ir en paralelo con la plataforma).\n- Alcance: preprocesamiento en EMR (Spark), entrenamiento en SageMaker, registro de modelos,\n  orquestaci\u00f3n con Amazon MWAA (Airflow) y alertas de fallo con CloudWatch + SNS.\n- Precio: ver [tarifas](../rate-card.md).", "company/services/realtime-recs-platform": "# Plataforma de recomendaciones en tiempo real (paquete MVP)\n\n- Duraci\u00f3n: 6 a 8 semanas.\n- Alcance:\n  - Feature store de baja latencia en DynamoDB.\n  - Grafo miembro-clase-instructor en Neptune para generar candidatos.\n  - Endpoint de inferencia en SageMaker (sin Kubernetes).\n  - API de recomendaciones (API Gateway + Lambda) con objetivo de latencia < 200 ms.\n  - Registro de eventos (MSK Serverless o Kinesis) hacia S3 para reentrenar.\n- No incluye: el pipeline de entrenamiento y orquestaci\u00f3n (ver [Pipeline MLOps](mlops-pipeline.md)).\n- Patr\u00f3n de referencia: [recomendaciones en tiempo real](../../aws/patterns/recomendaciones-tiempo-real.md).\n- Precio: ver [tarifas](../rate-card.md).", "company/services/well-architected-review": "# Well-Architected Review\n\n- Duraci\u00f3n: 1 a 2 semanas.\n- Alcance: revisi\u00f3n de los seis pilares del AWS Well-Architected Framework (excelencia operacional,\n  seguridad, confiabilidad, eficiencia de rendimiento, optimizaci\u00f3n de costos y sostenibilidad).\n- Entregables: informe de riesgos priorizados y plan de remediaci\u00f3n.\n- Precio: ver [tarifas](../rate-card.md).", "log": "# Cambios\n\n## 2026-10-05\n- Se agregan los servicios de plataforma de recomendaciones en tiempo real y pipeline MLOps.\n- Se agrega el patr\u00f3n de recomendaciones en tiempo real."}, "types": ["Company", "Concept", "Log", "Pattern", "RateCard", "Service"], "palette": {"BigQuery Dataset": "#8b5cf6", "BigQuery Table": "#3b82f6", "Reference": "#10b981"}};
+</script>
+<script>
+// Copyright 2026 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+(function () {
+  const bundle = window.BUNDLE;
+  const bundleName = window.BUNDLE_NAME;
+  document.title = `${bundleName} — OKF Viewer`;
+  document.getElementById("bundle-name").textContent = bundleName;
+
+  // Populate type filter
+  const typeSelect = document.getElementById("filter-type");
+  for (const t of bundle.types) {
+    const opt = document.createElement("option");
+    opt.value = t;
+    opt.textContent = t;
+    typeSelect.appendChild(opt);
+  }
+
+  // Build reverse-link index for backlinks
+  const backlinks = {};
+  for (const edge of bundle.edges) {
+    const { source, target } = edge.data;
+    (backlinks[target] ||= []).push(source);
+  }
+
+  // Look up node label/type by id
+  const nodeIndex = {};
+  for (const n of bundle.nodes) nodeIndex[n.data.id] = n.data;
+
+  const cy = cytoscape({
+    container: document.getElementById("graph"),
+    elements: [...bundle.nodes, ...bundle.edges],
+    style: [
+      {
+        selector: "node",
+        style: {
+          "background-color": "data(color)",
+          "label": "data(label)",
+          "color": "#0f172a",
+          "font-size": 11,
+          "text-valign": "bottom",
+          "text-margin-y": 4,
+          "text-wrap": "wrap",
+          "text-max-width": 120,
+          "width": "data(size)",
+          "height": "data(size)",
+          "border-width": 1,
+          "border-color": "#0f172a",
+        },
+      },
+      {
+        selector: "node[?stale]",
+        style: {
+          "border-width": 2,
+          "border-color": "#b91c1c",
+          "border-style": "dashed",
+        },
+      },
+      {
+        selector: 'node[status = "deprecated"]',
+        style: {
+          "opacity": 0.55,
+        },
+      },
+      {
+        selector: "node:selected",
+        style: {
+          "border-width": 3,
+          "border-color": "#f59e0b",
+        },
+      },
+      {
+        selector: "edge",
+        style: {
+          "width": 1.5,
+          "line-color": "#cbd5e1",
+          "target-arrow-color": "#cbd5e1",
+          "target-arrow-shape": "triangle",
+          "curve-style": "bezier",
+          "arrow-scale": 0.9,
+        },
+      },
+      {
+        selector: "edge:selected",
+        style: {
+          "line-color": "#f59e0b",
+          "target-arrow-color": "#f59e0b",
+          "width": 2.5,
+        },
+      },
+      {
+        selector: ".dim",
+        style: { "opacity": 0.15 },
+      },
+    ],
+    layout: { name: "cose", animate: false, padding: 30 },
+    wheelSensitivity: 0.2,
+  });
+
+  cy.on("tap", "node", (evt) => showDetail(evt.target.id()));
+  cy.on("tap", (evt) => {
+    if (evt.target === cy) clearSelection();
+  });
+
+  document.getElementById("layout").addEventListener("change", (e) => {
+    cy.layout({ name: e.target.value, animate: false, padding: 30 }).run();
+  });
+
+  document.getElementById("reset").addEventListener("click", () => {
+    cy.fit(null, 30);
+    clearSelection();
+  });
+
+  document.getElementById("search").addEventListener("input", (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    if (!q) {
+      cy.elements().removeClass("dim");
+      return;
+    }
+    cy.nodes().forEach((n) => {
+      const d = n.data();
+      const hay =
+        (d.label || "").toLowerCase() + " " +
+        d.id.toLowerCase() + " " +
+        (d.tags || []).join(" ").toLowerCase();
+      n.toggleClass("dim", !hay.includes(q));
+    });
+    cy.edges().forEach((edge) => {
+      const src = edge.source();
+      const tgt = edge.target();
+      edge.toggleClass("dim", src.hasClass("dim") || tgt.hasClass("dim"));
+    });
+  });
+
+  document.getElementById("filter-type").addEventListener("change", (e) => {
+    const t = e.target.value;
+    if (!t) {
+      cy.elements().removeClass("dim");
+      return;
+    }
+    cy.nodes().forEach((n) => {
+      n.toggleClass("dim", n.data("type") !== t);
+    });
+    cy.edges().forEach((edge) => {
+      edge.toggleClass("dim", edge.source().hasClass("dim") || edge.target().hasClass("dim"));
+    });
+  });
+
+  function clearSelection() {
+    cy.elements().unselect();
+    document.getElementById("detail-empty").hidden = false;
+    document.getElementById("detail-content").hidden = true;
+  }
+
+  function showDetail(conceptId) {
+    const data = nodeIndex[conceptId];
+    if (!data) return;
+    cy.elements().unselect();
+    const node = cy.getElementById(conceptId);
+    if (node) node.select();
+
+    document.getElementById("detail-empty").hidden = true;
+    const content = document.getElementById("detail-content");
+    content.hidden = false;
+
+    const chip = document.getElementById("detail-type");
+    chip.textContent = data.type;
+    chip.style.background = data.color;
+
+    document.getElementById("detail-title").textContent = data.label;
+    document.getElementById("detail-id").textContent = conceptId;
+    document.getElementById("detail-description").textContent = data.description || "—";
+
+    const resourceEl = document.getElementById("detail-resource");
+    resourceEl.innerHTML = "";
+    if (data.resource) {
+      const a = document.createElement("a");
+      a.href = data.resource;
+      a.textContent = data.resource;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.className = "external";
+      resourceEl.appendChild(a);
+    } else {
+      resourceEl.textContent = "—";
+    }
+
+    const tagsEl = document.getElementById("detail-tags");
+    tagsEl.innerHTML = "";
+    if (data.tags && data.tags.length) {
+      for (const t of data.tags) {
+        const span = document.createElement("span");
+        span.className = "tag";
+        span.textContent = t;
+        tagsEl.appendChild(span);
+      }
+    } else {
+      tagsEl.textContent = "—";
+    }
+
+    // v0.2 signal badges: status, trust tier, staleness.
+    const badgesEl = document.getElementById("detail-badges");
+    badgesEl.innerHTML = "";
+    const status = data.status || "stable";
+    badgesEl.appendChild(makeBadge(status, "status-" + status));
+    const tier = data.trust_tier || "unverified";
+    badgesEl.appendChild(makeBadge(tier.replace(/-/g, " "), "trust-" + tier));
+    if (data.stale) {
+      const label = data.stale_after ? `stale (since ${data.stale_after})` : "stale";
+      badgesEl.appendChild(makeBadge(label, "stale"));
+    } else if (data.stale_after) {
+      badgesEl.appendChild(makeBadge(`stale after ${data.stale_after}`, "fresh"));
+    }
+
+    document.getElementById("detail-generated").textContent = formatActorEvent(data.generated);
+
+    const verifiedEl = document.getElementById("detail-verified");
+    const verified = data.verified || [];
+    if (verified.length) {
+      verifiedEl.textContent = verified.map(formatActorEvent).join("; ");
+    } else {
+      verifiedEl.textContent = "—";
+    }
+
+    const sourcesEl = document.getElementById("detail-sources");
+    sourcesEl.innerHTML = "";
+    const sources = data.sources || [];
+    if (sources.length) {
+      const ul = document.createElement("ul");
+      ul.className = "sources-list";
+      for (const s of sources) {
+        const li = document.createElement("li");
+        const label = s.title || s.resource || s.id || "source";
+        if (s.resource && /^https?:\/\//.test(s.resource)) {
+          const a = document.createElement("a");
+          a.href = s.resource;
+          a.textContent = label;
+          a.target = "_blank";
+          a.rel = "noopener";
+          a.className = "external";
+          li.appendChild(a);
+        } else {
+          li.textContent = s.resource ? `${label} (${s.resource})` : label;
+        }
+        ul.appendChild(li);
+      }
+      sourcesEl.appendChild(ul);
+    } else {
+      sourcesEl.textContent = "—";
+    }
+
+    const body = bundle.bodies[conceptId] || "";
+    const html = marked.parse(body, { breaks: false, gfm: true });
+    const bodyEl = document.getElementById("detail-body");
+    bodyEl.innerHTML = html;
+    rewriteInternalLinks(bodyEl);
+
+    const bl = backlinks[conceptId] || [];
+    const blSection = document.getElementById("detail-backlinks");
+    const blList = document.getElementById("backlinks-list");
+    blList.innerHTML = "";
+    if (bl.length) {
+      blSection.hidden = false;
+      for (const src of bl) {
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.textContent = nodeIndex[src]?.label || src;
+        a.dataset.target = src;
+        a.addEventListener("click", () => showDetail(src));
+        li.appendChild(a);
+        const muted = document.createElement("span");
+        muted.className = "muted";
+        muted.textContent = ` (${src})`;
+        li.appendChild(muted);
+        blList.appendChild(li);
+      }
+    } else {
+      blSection.hidden = true;
+    }
+
+    cy.animate({ center: { eles: node }, zoom: Math.max(cy.zoom(), 1.0) }, { duration: 200 });
+  }
+
+  function makeBadge(text, cls) {
+    const span = document.createElement("span");
+    span.className = "badge " + cls;
+    span.textContent = text;
+    return span;
+  }
+
+  function formatActorEvent(event) {
+    if (!event || !event.by) return "—";
+    return event.at ? `${event.by} · ${event.at}` : String(event.by);
+  }
+
+  function rewriteInternalLinks(root) {
+    root.querySelectorAll("a[href]").forEach((a) => {
+      const href = a.getAttribute("href");
+      if (!href) return;
+      if (href.startsWith("/") && href.endsWith(".md")) {
+        const target = href.slice(1, -3);
+        if (nodeIndex[target]) {
+          a.className = "internal";
+          a.setAttribute("href", "javascript:void(0)");
+          a.addEventListener("click", (e) => {
+            e.preventDefault();
+            showDetail(target);
+          });
+          return;
+        }
+      }
+      a.className = "external";
+      a.setAttribute("target", "_blank");
+      a.setAttribute("rel", "noopener");
+    });
+  }
+
+  // Auto-show the first node (a dataset if available, else first concept)
+  const initial =
+    bundle.nodes.find((n) => n.data.type === "BigQuery Dataset") ||
+    bundle.nodes[0];
+  if (initial) showDetail(initial.data.id);
+})();
+
+</script>
+</body>
+</html>
